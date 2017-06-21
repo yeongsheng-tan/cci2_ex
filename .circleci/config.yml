@@ -4,6 +4,7 @@ jobs:
     working_directory: ~/cci2_ex_umbrella
     docker:
       - image: yeongsheng/alpine-elixir:1.4.4
+        working_directory: ~/cci2_ex_umbrella
       - image: sickp/alpine-redis:3.2.9
         command: ["redis-server", "--requirepass", "rna"]
       - image: taskinen/tftp
