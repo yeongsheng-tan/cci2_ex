@@ -1,2 +1,5 @@
 lib/cci2_ex_web/router.ex:1: Function segments/3 will never be called
 lib/phoenix/router.ex:2: Function call/2 has no local return
+:0: Unknown function 'Elixir.ExUnit.Callbacks':'__merge__'/3
+:0: Unknown function 'Elixir.ExUnit.CaseTemplate':'__proxy__'/2
+test/support/conn_case.ex:30: Function '__ex_unit_setup_0'/1 has no local return
