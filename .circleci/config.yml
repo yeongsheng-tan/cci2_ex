@@ -19,7 +19,6 @@ jobs:
       - run: mix local.hex --force
       - run: mix local.rebar --force
       - run: mix archive.install --force https://github.com/phoenixframework/archives/raw/master/phx_new.ez
-      - run: mix ecto.create
       - run: mix deps.get
       - run: mix deps.compile
       - run: mix ecto.create
