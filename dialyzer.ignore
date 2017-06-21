@@ -1,0 +1,2 @@
+lib/cci2_ex_web/router.ex:1: Function segments/3 will never be called
+lib/phoenix/router.ex:2: Function call/2 has no local return

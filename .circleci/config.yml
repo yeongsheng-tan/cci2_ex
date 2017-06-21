@@ -1,0 +1,22 @@
+version: 2
+jobs:
+  build:
+    working_directory: ~/cci2_ex_umbrella
+    docker:
+      - image: yeongsheng/alpine-elixir:1.4.4
+      - image: sickp/alpine-redis:3.2.9
+        command: ["redis-server", "--requirepass", "rna"]
+      - image: taskinen/tftp
+        command: ["--foreground", "--verbose", "--create", "--secure", "/var/tftpboot"]
+      - image: onjin/alpine-postgres:9.6.2
+        environment:
+          POSTGRES_USER: rna
+
+    steps:
+      - checkout
+      - run: mix ecto.create
+      - run: mix deps.get
+      - run: mix deps.compile
+      - run: mix ecto.create
+      - run: mix espec
+      - run: mix dialyzer

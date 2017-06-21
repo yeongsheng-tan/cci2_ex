@@ -1,0 +1,77 @@
+FROM bitwalker/alpine-elixir:1.4.4
+
+MAINTAINER Yeong Sheng, Tan <tanyeongsheng@gmail.com>
+ENV REFRESHED_AT=2017-Jun-16 \
+    SHELL=/bin/sh \
+    LANG=en_US.UTF-8 \
+    LC_ALL=${LANG} \
+    LANGUAGE=en_US:en \
+    HOME=/root \
+    TERM=xterm \
+    PGDATA=/var/lib/postgresql/data \
+    PGUSER=postgres \
+    PGPASSWORD=postgres \
+    REPLACE_OS_VARS=true \
+    PYTHONIOENCODING=UTF-8 \
+    PHANTOMJS_VERSION=2.1.12 \
+    REDIS_VERSION=3.2.9 \
+    MIX_ENV=test
+
+COPY scripts/postgres-entrypoint.sh /
+COPY scripts/mqtt-entrypoint.sh /
+COPY config/supervisord/supervisord.conf /etc/supervisor/conf.d/supervisord.conf
+
+# Prep volume dir for postgresql, redis-server, mosquitto broker and tftp-hpa
+VOLUME ["/var/lib/postgresql/data", "/var/lib/redis", "/var/run/redis", "/var/lib/mosquitto/data", "/var/log/mosquitto", "/var/tftpboot", "/var/log/supervisord", "/var/log/rna-umbrella"]
+
+RUN set -exo pipefail \
+  echo "@edge http://nl.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories && \
+  apk update --no-cache \
+  && apk upgrade --no-cache \
+  && apk --no-cache --update add \
+    autoconf build-base curl ca-certificates g++@edge git@edge glances@edge gzip@edge rsync@edge wget@edge \
+    libgcc@edge libstdc++@edge make@edge ncurses-dev netcat-openbsd net-tools@edge \
+    openssh-client openssl openssl-dev parallel perl-dev protobuf@edge \
+    python2@edge python2-dev@edge py2-pip@edge nodejs@edge \
+    rsyslog ruby ruby-bundler ruby-json supervisor@edge tar unixodbc-dev vim@edge zlib-dev \
+    net-snmp@edge net-snmp-libs@edge net-snmp-tools@edge net-snmp-perl@edge \
+    "libpq@edge<9.7" "postgresql-client@edge<9.7" "postgresql@edge<9.7" "postgresql-contrib@edge<9.7" \
+    mosquitto@edge mosquitto-clients@edge redis@edge tftp-hpa@edge \
+  && apk --no-cache --update --allow-untrusted --repository http://dl-3.alpinelinux.org/alpine/edge/testing/ add arp-scan@edge \
+  && rm -rf /var/cache/apk/* \
+  # Download and install gosu for starting postgresql server and redis-server processes
+  # https://github.com/tianon/gosu
+  && wget -O /usr/local/bin/gosu https://github.com/tianon/gosu/releases/download/1.10/gosu-amd64 \
+  && chmod +x /usr/local/bin/gosu \
+  && mkdir -p /etc/supervisor/conf.d \
+  # give execution permissions to entrypoint shells
+  && chmod +x /postgres-entrypoint.sh /redis-entrypoint.sh /mqtt-entrypoint.sh \
+  # redis-server customisations ->
+  # do not daemonise redis-server
+  # expose redis-server to all NIC interfaces
+  # do not enable aof appendsync
+  # set creds for redis-server in /etc/redis.conf
+  # permission to pid run and data dir for redis-server
+  && sed -i -e 's/daemonize yes/daemonize no/' /etc/redis.conf \
+  && sed -i -e 's/bind 127.0.0.1/bind 0.0.0.0/' /etc/redis.conf \
+  && sed -i -e 's/appendfsync everysec/# appendfsync everysec/' /etc/redis.conf \
+  && sed -i -e 's/# appendfsync no/appendfsync no/' /etc/redis.conf \
+  && sed -i -e 's/# requirepass foobared/requirepass rna/' /etc/redis.conf \
+  && chown -R redis /var/lib/redis \
+  && chown -R redis /var/run/redis
+
+WORKDIR /root
+
+RUN \
+  # Install foreman and danger gem globally
+  gem install foreman --no-document \
+  # Install yarn, brunch and phantomjs globally
+  # && npm install --global yarn \
+  # && yarn add global brunch "phantomjs-prebuilt@${PHANTOMJS_VERSION}" chromedriver \
+  # Install hex+rebar
+  && mix local.hex --force \
+  && mix local.rebar --force \
+  && mix hex.info
+
+EXPOSE 69/udp 1883 5432 6379
+ENTRYPOINT ["/usr/bin/supervisord", "-c", "/etc/supervisor/conf.d/supervisord.conf"]
