@@ -1,8 +1,6 @@
 version: 2
 jobs:
   build:
-    environment:
-      - HOME: ~/cci2_ex_umbrella
     working_directory: ~/cci2_ex_umbrella
     docker:
       - image: yeongsheng/alpine-elixir:1.4.4
