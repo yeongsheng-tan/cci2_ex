@@ -9,7 +9,7 @@ jobs:
       - image: erlio/docker-vernemq:1.0.1
       - image: taskinen/tftp
         command: ["--foreground", "--verbose", "--create", "--secure", "/var/tftpboot"]
-      - image: kiasaki/alpine-postgres:9.6
+      - image: onjin/alpine-postgres:9.6
         environment:
           POSTGRES_USER: postgres
 
