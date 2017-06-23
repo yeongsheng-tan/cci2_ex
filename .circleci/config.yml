@@ -6,7 +6,7 @@ jobs:
       - image: yeongsheng/alpine-elixir-circleci:1.4.5
       - image: sickp/alpine-redis:3.2.9
         command: ["redis-server", "--requirepass", "rna"]
-      - image erlio/docker-vernemq:1.0.1
+      - image: erlio/docker-vernemq:1.0.1
       - image: taskinen/tftp
         command: ["--foreground", "--verbose", "--create", "--secure", "/var/tftpboot"]
       - image: kiasaki/alpine-postgres:9.6
